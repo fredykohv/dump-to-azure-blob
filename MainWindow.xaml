@@ -1,0 +1,92 @@
+<Window x:Class="DumpToAzureBlob.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:local="clr-namespace:DumpToAzureBlob"
+        mc:Ignorable="d"
+        Title="Azure Blob Storage Uploader" Height="600" Width="800"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        Background="{DynamicResource MaterialDesignPaper}"
+        TextElement.FontWeight="Medium"
+        TextElement.FontSize="14"
+        FontFamily="{materialDesign:MaterialDesignFont}">
+    
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <materialDesign:BundledTheme BaseTheme="Light" PrimaryColor="DeepPurple" SecondaryColor="Lime" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Connection Settings -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="Azure Blob Storage Settings" 
+                       Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                       Margin="0,0,0,16"/>
+            
+            <TextBox x:Name="ConnectionStringTextBox"
+                     materialDesign:HintAssist.Hint="Connection String"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                     Margin="0,0,0,8"/>
+            
+            <TextBox x:Name="ContainerNameTextBox"
+                     materialDesign:HintAssist.Hint="Container Name"
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                     Margin="0,0,0,16"/>
+            
+            <Button x:Name="SaveSettingsButton"
+                    Content="Save Settings"
+                    Style="{StaticResource MaterialDesignRaisedButton}"
+                    Click="SaveSettingsButton_Click"/>
+        </StackPanel>
+
+        <!-- File Upload Area -->
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Text="Drag and drop files here or click to browse"
+                       Style="{StaticResource MaterialDesignSubtitle1TextBlock}"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Margin="0,0,0,16"/>
+
+            <ListView x:Name="FilesListView"
+                      Grid.Row="1"
+                      Style="{StaticResource MaterialDesignListView}"
+                      AllowDrop="True"
+                      Drop="FilesListView_Drop"
+                      DragEnter="FilesListView_DragEnter">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="File Name" Width="300" DisplayMemberBinding="{Binding FileName}"/>
+                        <GridViewColumn Header="Size" Width="100" DisplayMemberBinding="{Binding Size}"/>
+                        <GridViewColumn Header="Status" Width="100" DisplayMemberBinding="{Binding Status}"/>
+                        <GridViewColumn Header="Progress" Width="200">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ProgressBar Value="{Binding Progress}" 
+                                                Width="180"
+                                                Height="20"
+                                                Style="{StaticResource MaterialDesignLinearProgressBar}"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </Grid>
+    </Grid>
+</Window> 
