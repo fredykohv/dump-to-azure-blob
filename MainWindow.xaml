@@ -6,7 +6,7 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:local="clr-namespace:DumpToAzureBlob"
         mc:Ignorable="d"
-        Title="Azure Blob Storage Uploader" Height="600" Width="800"
+        Title="Azure Blob Storage Uploader" Height="800" Width="1000"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         Background="{DynamicResource MaterialDesignPaper}"
         TextElement.FontWeight="Medium"
@@ -24,6 +24,7 @@
 
     <Grid Margin="16">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
@@ -50,8 +51,60 @@
                     Click="SaveSettingsButton_Click"/>
         </StackPanel>
 
+        <!-- Monitored Folders -->
+        <Grid Grid.Row="1" Margin="0,0,0,16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Text="Monitored Folders" 
+                       Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                       Margin="0,0,0,8"/>
+
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
+                <TextBox x:Name="FolderPathTextBox"
+                         materialDesign:HintAssist.Hint="Folder Path"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Width="400"
+                         Margin="0,0,8,0"/>
+                
+                <Button x:Name="BrowseFolderButton"
+                        Content="Browse"
+                        Style="{StaticResource MaterialDesignRaisedButton}"
+                        Click="BrowseFolderButton_Click"
+                        Margin="0,0,8,0"/>
+                
+                <Button x:Name="AddFolderButton"
+                        Content="Add Folder"
+                        Style="{StaticResource MaterialDesignRaisedButton}"
+                        Click="AddFolderButton_Click"/>
+            </StackPanel>
+
+            <ListView x:Name="MonitoredFoldersListView"
+                      Grid.Row="2"
+                      Style="{StaticResource MaterialDesignListView}"
+                      Height="150">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Folder Path" Width="600" DisplayMemberBinding="{Binding}"/>
+                        <GridViewColumn Header="Actions" Width="100">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="Remove"
+                                            Style="{StaticResource MaterialDesignFlatButton}"
+                                            Click="RemoveFolderButton_Click"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </Grid>
+
         <!-- File Upload Area -->
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="2">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>

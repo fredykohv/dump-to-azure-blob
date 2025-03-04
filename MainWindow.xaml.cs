@@ -9,20 +9,35 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Win32;
+using System.Collections.Specialized;
+using System.Windows.Forms;
+using MessageBox = System.Windows.MessageBox;
+using System.Text.Json;
+using DragEventArgs = System.Windows.DragEventArgs;
+using DataFormats = System.Windows.DataFormats;
+using DragDropEffects = System.Windows.DragDropEffects;
+using System.Runtime.InteropServices;
 
 namespace DumpToAzureBlob
 {
     public partial class MainWindow : Window
     {
         private ObservableCollection<FileUploadItem> _uploadItems;
+        private ObservableCollection<string> _monitoredFolders;
         private BlobServiceClient? _blobServiceClient;
         private string? _containerName;
+        private readonly Dictionary<string, FileSystemWatcher> _folderWatchers;
+        private const string MonitoredFoldersFile = "monitored_folders.json";
 
         public MainWindow()
         {
             InitializeComponent();
             _uploadItems = new ObservableCollection<FileUploadItem>();
+            _monitoredFolders = new ObservableCollection<string>();
+            _folderWatchers = new Dictionary<string, FileSystemWatcher>();
+            
             FilesListView.ItemsSource = _uploadItems;
+            MonitoredFoldersListView.ItemsSource = _monitoredFolders;
 
             // Load saved settings
             LoadSettings();
@@ -32,6 +47,51 @@ namespace DumpToAzureBlob
         {
             ConnectionStringTextBox.Text = Properties.Settings.Default.ConnectionString;
             ContainerNameTextBox.Text = Properties.Settings.Default.ContainerName;
+
+            _blobServiceClient = new BlobServiceClient(ConnectionStringTextBox.Text);
+            _containerName = ContainerNameTextBox.Text;
+
+            LoadMonitoredFolders();
+        }
+
+        private void LoadMonitoredFolders()
+        {
+            try
+            {
+                if (File.Exists(MonitoredFoldersFile))
+                {
+                    var json = File.ReadAllText(MonitoredFoldersFile);
+                    var folders = JsonSerializer.Deserialize<string[]>(json);
+                    if (folders != null)
+                    {
+                        foreach (var folder in folders)
+                        {
+                            if (Directory.Exists(folder))
+                            {
+                                _monitoredFolders.Add(folder);
+                                StartWatchingFolder(folder);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading monitored folders: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void SaveMonitoredFolders()
+        {
+            try
+            {
+                var json = JsonSerializer.Serialize(_monitoredFolders.ToArray());
+                File.WriteAllText(MonitoredFoldersFile, json);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error saving monitored folders: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void SaveSettingsButton_Click(object sender, RoutedEventArgs e)
@@ -50,6 +110,212 @@ namespace DumpToAzureBlob
             {
                 MessageBox.Show($"Error saving settings: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void BrowseFolderButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                MessageBox.Show("Folder browser is only supported on Windows", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            using var dialog = new FolderBrowserDialog();
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                FolderPathTextBox.Text = dialog.SelectedPath;
+            }
+        }
+
+        private void AddFolderButton_Click(object sender, RoutedEventArgs e)
+        {
+            string folderPath = FolderPathTextBox.Text.Trim();
+            if (string.IsNullOrEmpty(folderPath))
+            {
+                MessageBox.Show("Please enter a folder path", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            if (!Directory.Exists(folderPath))
+            {
+                MessageBox.Show("The specified folder does not exist", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            if (_monitoredFolders.Contains(folderPath))
+            {
+                MessageBox.Show("This folder is already being monitored", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            _monitoredFolders.Add(folderPath);
+            StartWatchingFolder(folderPath);
+            SaveMonitoredFolders();
+            FolderPathTextBox.Clear();
+        }
+
+        private void RemoveFolderButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button button && button.DataContext is string folderPath)
+            {
+                StopWatchingFolder(folderPath);
+                _monitoredFolders.Remove(folderPath);
+                SaveMonitoredFolders();
+            }
+        }
+
+        private void StartWatchingFolder(string folderPath)
+        {
+            if (_blobServiceClient == null || string.IsNullOrEmpty(_containerName))
+            {
+                MessageBox.Show("Please configure Azure Blob Storage settings before adding folders to monitor", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            try
+            {
+                var watcher = new FileSystemWatcher(folderPath)
+                {
+                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.LastWrite,
+                    Filter = "*.*",
+                    EnableRaisingEvents = true,
+                    IncludeSubdirectories = true
+                };
+
+                // Only handle Changed event for files that are done being written
+                watcher.Changed += async (s, e) => await OnFileChangedAsync(s, e);
+                watcher.Deleted += async (s, e) => await OnFileDeletedAsync(s, e);
+                watcher.Renamed += async (s, e) => await OnFileRenamedAsync(s, e);
+
+                _folderWatchers[folderPath] = watcher;
+                _ = SyncFolderWithBlobStorageAsync(folderPath);
+                
+                MessageBox.Show($"Started monitoring folder: {folderPath}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error starting folder monitoring: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void StopWatchingFolder(string folderPath)
+        {
+            if (_folderWatchers.TryGetValue(folderPath, out var watcher))
+            {
+                watcher.EnableRaisingEvents = false;
+                watcher.Dispose();
+                _folderWatchers.Remove(folderPath);
+            }
+        }
+
+        private async Task SyncFolderWithBlobStorageAsync(string folderPath)
+        {
+            if (_blobServiceClient == null || string.IsNullOrEmpty(_containerName))
+            {
+                MessageBox.Show("Azure Blob Storage settings not configured", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            try
+            {
+                var containerClient = _blobServiceClient.GetBlobContainerClient(_containerName);
+                var files = Directory.GetFiles(folderPath, "*.*", SearchOption.AllDirectories);
+                
+                MessageBox.Show($"Found {files.Length} files to sync in {folderPath}", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                foreach (var file in files)
+                {
+                    try
+                    {
+                        var relativePath = Path.GetRelativePath(folderPath, file);
+                        var blockBlobClient = containerClient.GetBlockBlobClient(relativePath);
+                        
+                        // Check if the blob already exists
+                        if (await blockBlobClient.ExistsAsync())
+                        {
+                            // Get the local file's last modified time
+                            var localFileInfo = new FileInfo(file);
+                            var localLastModified = localFileInfo.LastWriteTimeUtc;
+                            
+                            // Get the blob's last modified time
+                            var blobProperties = await blockBlobClient.GetPropertiesAsync();
+                            var blobLastModified = blobProperties.Value.LastModified.UtcDateTime;
+                            
+                            // Only upload if the local file is newer
+                            if (localLastModified <= blobLastModified)
+                            {
+                                // Skip
+                                continue;
+                            }
+                        }
+
+                        using var fileStream = File.OpenRead(file);
+                        await blockBlobClient.UploadAsync(fileStream, new BlobUploadOptions());
+                        MessageBox.Show($"Successfully uploaded: {relativePath}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error uploading file {file}: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error syncing folder: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task OnFileChangedAsync(object sender, FileSystemEventArgs e)
+        {
+            if (_blobServiceClient == null || string.IsNullOrEmpty(_containerName))
+            {
+                MessageBox.Show("Azure Blob Storage settings not configured", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            try
+            {
+                // Check if the file is still being written to
+                using (var fs = new FileStream(e.FullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                    // If we can open the file with ReadWrite sharing, it's done being written
+                    var containerClient = _blobServiceClient.GetBlobContainerClient(_containerName);
+                    var relativePath = Path.GetRelativePath(Path.GetDirectoryName(e.FullPath)!, e.FullPath);
+                    var blockBlobClient = containerClient.GetBlockBlobClient(relativePath);
+
+                    await blockBlobClient.UploadAsync(fs, new BlobUploadOptions());
+                    MessageBox.Show($"Successfully uploaded changed file: {relativePath}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error uploading file: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task OnFileDeletedAsync(object sender, FileSystemEventArgs e)
+        {
+            if (_blobServiceClient == null || string.IsNullOrEmpty(_containerName))
+                return;
+
+            try
+            {
+                var containerClient = _blobServiceClient.GetBlobContainerClient(_containerName);
+                var relativePath = Path.GetRelativePath(Path.GetDirectoryName(e.FullPath)!, e.FullPath);
+                var blockBlobClient = containerClient.GetBlockBlobClient(relativePath);
+                await blockBlobClient.DeleteIfExistsAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error deleting blob: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task OnFileRenamedAsync(object sender, RenamedEventArgs e)
+        {
+            // Delete the old file
+            await OnFileDeletedAsync(sender, e);
+            // Wait for the Changed event to handle the new file
         }
 
         private void FilesListView_DragEnter(object sender, DragEventArgs e)
@@ -113,10 +379,12 @@ namespace DumpToAzureBlob
                 
                 item.Status = "Completed";
                 item.Progress = 100;
+                MessageBox.Show($"Successfully uploaded: {item.FileName}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 item.Status = $"Error: {ex.Message}";
+                MessageBox.Show($"Error uploading {item.FileName}: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -131,6 +399,16 @@ namespace DumpToAzureBlob
                 size /= 1024;
             }
             return $"{size:0.##} {sizes[order]}";
+        }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            foreach (var watcher in _folderWatchers.Values)
+            {
+                watcher.EnableRaisingEvents = false;
+                watcher.Dispose();
+            }
+            base.OnClosing(e);
         }
     }
 
