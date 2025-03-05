@@ -10,7 +10,6 @@ using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Win32;
 using System.Collections.Specialized;
-using System.Windows.Forms;
 using MessageBox = System.Windows.MessageBox;
 using System.Text.Json;
 using DragEventArgs = System.Windows.DragEventArgs;
@@ -23,6 +22,7 @@ namespace DumpToAzureBlob
     public partial class MainWindow : Window
     {
         private ObservableCollection<FileUploadItem> _uploadItems;
+        private ObservableCollection<BlobItem> _blobItems;
         private ObservableCollection<string> _monitoredFolders;
         private BlobServiceClient? _blobServiceClient;
         private string? _containerName;
@@ -33,10 +33,12 @@ namespace DumpToAzureBlob
         {
             InitializeComponent();
             _uploadItems = new ObservableCollection<FileUploadItem>();
+            _blobItems = new ObservableCollection<BlobItem>();
             _monitoredFolders = new ObservableCollection<string>();
             _folderWatchers = new Dictionary<string, FileSystemWatcher>();
             
             FilesListView.ItemsSource = _uploadItems;
+            BlobsListView.ItemsSource = _blobItems;
             MonitoredFoldersListView.ItemsSource = _monitoredFolders;
 
             // Load saved settings
@@ -120,7 +122,7 @@ namespace DumpToAzureBlob
                 return;
             }
 
-            using var dialog = new FolderBrowserDialog();
+            using var dialog = new System.Windows.Forms.FolderBrowserDialog();
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 FolderPathTextBox.Text = dialog.SelectedPath;
@@ -401,6 +403,78 @@ namespace DumpToAzureBlob
             return $"{size:0.##} {sizes[order]}";
         }
 
+        private async void TabControl_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            if (e.Source is System.Windows.Controls.TabControl tabControl)
+            {
+                // Check if the selected tab is the Download tab (index 1)
+                if (tabControl.SelectedIndex == 1)
+                {
+                    await RefreshBlobListAsync();
+                }
+            }
+        }
+
+        private async Task RefreshBlobListAsync()
+        {
+            if (_blobServiceClient == null || string.IsNullOrEmpty(_containerName))
+            {
+                MessageBox.Show("Please configure Azure Blob Storage settings first", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            try
+            {
+                _blobItems.Clear();
+                var containerClient = _blobServiceClient.GetBlobContainerClient(_containerName);
+                await foreach (var blobItem in containerClient.GetBlobsAsync())
+                {
+                    _blobItems.Add(new BlobItem
+                    {
+                        Name = blobItem.Name,
+                        Size = FormatFileSize(blobItem.Properties.ContentLength ?? 0),
+                        LastModified = blobItem.Properties.LastModified?.LocalDateTime.ToString("g") ?? "N/A",
+                        BlobClient = containerClient.GetBlobClient(blobItem.Name)
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error refreshing blob list: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async void RefreshBlobsButton_Click(object sender, RoutedEventArgs e)
+        {
+            await RefreshBlobListAsync();
+        }
+
+        private async void DownloadBlobButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button button && button.DataContext is BlobItem blobItem)
+            {
+                var dialog = new Microsoft.Win32.SaveFileDialog
+                {
+                    FileName = Path.GetFileName(blobItem.Name),
+                    Filter = "All files (*.*)|*.*"
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    try
+                    {
+                        using var fileStream = File.Create(dialog.FileName);
+                        await blobItem.BlobClient.DownloadToAsync(fileStream);
+                        MessageBox.Show($"Successfully downloaded: {blobItem.Name}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error downloading file: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
+        }
+
         protected override void OnClosing(CancelEventArgs e)
         {
             foreach (var watcher in _folderWatchers.Values)
@@ -410,6 +484,14 @@ namespace DumpToAzureBlob
             }
             base.OnClosing(e);
         }
+    }
+
+    public class BlobItem
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Size { get; set; } = string.Empty;
+        public string LastModified { get; set; } = string.Empty;
+        public BlobClient BlobClient { get; set; } = null!;
     }
 
     public class FileUploadItem : INotifyPropertyChanged

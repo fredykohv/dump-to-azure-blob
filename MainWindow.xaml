@@ -6,12 +6,13 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:local="clr-namespace:DumpToAzureBlob"
         mc:Ignorable="d"
-        Title="Azure Blob Storage Uploader" Height="800" Width="1000"
+        Title="Azure Blob Storage Manager" Height="800" Width="1000"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         Background="{DynamicResource MaterialDesignPaper}"
         TextElement.FontWeight="Medium"
         TextElement.FontSize="14"
-        FontFamily="{materialDesign:MaterialDesignFont}">
+        FontFamily="{materialDesign:MaterialDesignFont}"
+        Icon="pack://application:,,,/Resources/favicon.ico">
     
     <Window.Resources>
         <ResourceDictionary>
@@ -24,7 +25,6 @@
 
     <Grid Margin="16">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
@@ -51,95 +51,167 @@
                     Click="SaveSettingsButton_Click"/>
         </StackPanel>
 
-        <!-- Monitored Folders -->
-        <Grid Grid.Row="1" Margin="0,0,0,16">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+        <!-- Tab Control for Upload and Download -->
+        <TabControl Grid.Row="1" Style="{StaticResource MaterialDesignFilledTabControl}" 
+                    TabStripPlacement="Top" 
+                    Margin="0,8,0,0"
+                    SelectionChanged="TabControl_SelectionChanged">
+            <!-- Upload Tab -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal" Margin="8,0">
+                        <materialDesign:PackIcon Kind="Upload" Width="24" Height="24" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Upload" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
 
-            <TextBlock Text="Monitored Folders" 
-                       Style="{StaticResource MaterialDesignHeadline6TextBlock}"
-                       Margin="0,0,0,8"/>
+                    <!-- Monitored Folders -->
+                    <Grid Grid.Row="0" Margin="0,0,0,16">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
 
-            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
-                <TextBox x:Name="FolderPathTextBox"
-                         materialDesign:HintAssist.Hint="Folder Path"
-                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                         Width="400"
-                         Margin="0,0,8,0"/>
-                
-                <Button x:Name="BrowseFolderButton"
-                        Content="Browse"
-                        Style="{StaticResource MaterialDesignRaisedButton}"
-                        Click="BrowseFolderButton_Click"
-                        Margin="0,0,8,0"/>
-                
-                <Button x:Name="AddFolderButton"
-                        Content="Add Folder"
-                        Style="{StaticResource MaterialDesignRaisedButton}"
-                        Click="AddFolderButton_Click"/>
-            </StackPanel>
+                        <TextBlock Text="Monitored Folders" 
+                                  Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                                  Margin="0,0,0,8"/>
 
-            <ListView x:Name="MonitoredFoldersListView"
-                      Grid.Row="2"
-                      Style="{StaticResource MaterialDesignListView}"
-                      Height="150">
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn Header="Folder Path" Width="600" DisplayMemberBinding="{Binding}"/>
-                        <GridViewColumn Header="Actions" Width="100">
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Button Content="Remove"
-                                            Style="{StaticResource MaterialDesignFlatButton}"
-                                            Click="RemoveFolderButton_Click"/>
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-                    </GridView>
-                </ListView.View>
-            </ListView>
-        </Grid>
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBox x:Name="FolderPathTextBox"
+                                    materialDesign:HintAssist.Hint="Folder Path"
+                                    Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                    Width="400"
+                                    Margin="0,0,8,0"/>
+                            
+                            <Button x:Name="BrowseFolderButton"
+                                    Content="Browse"
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    Click="BrowseFolderButton_Click"
+                                    Margin="0,0,8,0"/>
+                            
+                            <Button x:Name="AddFolderButton"
+                                    Content="Add Folder"
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    Click="AddFolderButton_Click"/>
+                        </StackPanel>
 
-        <!-- File Upload Area -->
-        <Grid Grid.Row="2">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+                        <ListView x:Name="MonitoredFoldersListView"
+                                 Grid.Row="2"
+                                 Style="{StaticResource MaterialDesignListView}"
+                                 Height="150">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Folder Path" Width="600" DisplayMemberBinding="{Binding}"/>
+                                    <GridViewColumn Header="Actions" Width="200">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Content="Remove"
+                                                        Style="{StaticResource MaterialDesignFlatButton}"
+                                                        Click="RemoveFolderButton_Click"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                    </Grid>
 
-            <TextBlock Text="Drag and drop files here or click to browse"
-                       Style="{StaticResource MaterialDesignSubtitle1TextBlock}"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"
-                       Margin="0,0,0,16"/>
+                    <!-- File Upload Area -->
+                    <Grid Grid.Row="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
 
-            <ListView x:Name="FilesListView"
-                      Grid.Row="1"
-                      Style="{StaticResource MaterialDesignListView}"
-                      AllowDrop="True"
-                      Drop="FilesListView_Drop"
-                      DragEnter="FilesListView_DragEnter">
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn Header="File Name" Width="300" DisplayMemberBinding="{Binding FileName}"/>
-                        <GridViewColumn Header="Size" Width="100" DisplayMemberBinding="{Binding Size}"/>
-                        <GridViewColumn Header="Status" Width="100" DisplayMemberBinding="{Binding Status}"/>
-                        <GridViewColumn Header="Progress" Width="200">
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <ProgressBar Value="{Binding Progress}" 
-                                                Width="180"
-                                                Height="20"
-                                                Style="{StaticResource MaterialDesignLinearProgressBar}"/>
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-                    </GridView>
-                </ListView.View>
-            </ListView>
-        </Grid>
+                        <TextBlock Text="Drag and drop files here or click to browse"
+                                  Style="{StaticResource MaterialDesignSubtitle1TextBlock}"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  Margin="0,0,0,16"/>
+
+                        <ListView x:Name="FilesListView"
+                                 Grid.Row="1"
+                                 Style="{StaticResource MaterialDesignListView}"
+                                 AllowDrop="True"
+                                 Drop="FilesListView_Drop"
+                                 DragEnter="FilesListView_DragEnter">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="File Name" Width="300" DisplayMemberBinding="{Binding FileName}"/>
+                                    <GridViewColumn Header="Size" Width="100" DisplayMemberBinding="{Binding Size}"/>
+                                    <GridViewColumn Header="Status" Width="100" DisplayMemberBinding="{Binding Status}"/>
+                                    <GridViewColumn Header="Progress" Width="200">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <ProgressBar Value="{Binding Progress}" 
+                                                            Width="180"
+                                                            Height="20"
+                                                            Style="{StaticResource MaterialDesignLinearProgressBar}"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <!-- Download Tab -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal" Margin="8,0">
+                        <materialDesign:PackIcon Kind="Download" Width="24" Height="24" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Download" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
+                        <TextBlock Text="Blob Storage Items" 
+                                  Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                                  VerticalAlignment="Center"/>
+                        
+                        <Button x:Name="RefreshBlobsButton"
+                                Content="Refresh"
+                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                Click="RefreshBlobsButton_Click"
+                                Margin="16,0,0,0"
+                                VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <ListView x:Name="BlobsListView"
+                             Grid.Row="1"
+                             Style="{StaticResource MaterialDesignListView}">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Name" Width="300" DisplayMemberBinding="{Binding Name}"/>
+                                <GridViewColumn Header="Size" Width="100" DisplayMemberBinding="{Binding Size}"/>
+                                <GridViewColumn Header="Last Modified" Width="150" DisplayMemberBinding="{Binding LastModified}"/>
+                                <GridViewColumn Header="Actions" Width="200">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Content="Download"
+                                                    Style="{StaticResource MaterialDesignFlatButton}"
+                                                    Click="DownloadBlobButton_Click"/>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </Grid>
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window> 
