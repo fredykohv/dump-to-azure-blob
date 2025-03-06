@@ -8,112 +8,290 @@
         mc:Ignorable="d"
         Title="Azure Blob Storage Manager" Height="800" Width="1000"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
-        Background="{DynamicResource MaterialDesignPaper}"
-        TextElement.FontWeight="Medium"
+        Background="White"
+        TextElement.FontWeight="Regular"
         TextElement.FontSize="14"
         FontFamily="{materialDesign:MaterialDesignFont}"
-        Icon="pack://application:,,,/Resources/favicon.ico">
+        WindowStartupLocation="CenterScreen">
     
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <materialDesign:BundledTheme BaseTheme="Light" PrimaryColor="DeepPurple" SecondaryColor="Lime" />
+                <materialDesign:BundledTheme BaseTheme="Light" PrimaryColor="LightBlue" SecondaryColor="Blue" />
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Windows 11 Style Button -->
+            <Style x:Key="Windows11Button" TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
+                <Setter Property="Background" Value="#0067C0"/>
+                <Setter Property="Foreground" Value="White"/>
+                <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="4"/>
+                <Setter Property="Height" Value="35"/>
+                <Setter Property="Padding" Value="16,0"/>
+                <Setter Property="FontWeight" Value="Normal"/>
+            </Style>
+
+            <!-- Windows 11 Style Flat Button -->
+            <Style x:Key="Windows11FlatButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignFlatButton}">
+                <Setter Property="Foreground" Value="#0067C0"/>
+                <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="4"/>
+                <Setter Property="Height" Value="35"/>
+                <Setter Property="FontWeight" Value="Normal"/>
+            </Style>
+
+            <!-- Windows 11 Style TextBox -->
+            <Style x:Key="Windows11TextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
+                <Setter Property="materialDesign:TextFieldAssist.UnderlineBrush" Value="#0067C0"/>
+                <Setter Property="materialDesign:TextFieldAssist.TextBoxViewMargin" Value="2,0,2,0"/>
+                <Setter Property="Height" Value="40"/>
+                <Setter Property="Padding" Value="8,8,8,0"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="BorderBrush" Value="#0067C0"/>
+                    </Trigger>
+                    <Trigger Property="IsFocused" Value="True">
+                        <Setter Property="BorderBrush" Value="#0067C0"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- Windows 11 Style ListView -->
+            <Style x:Key="Windows11ListView" TargetType="ListView" BasedOn="{StaticResource MaterialDesignListView}">
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource MaterialDesignDivider}"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+                <Setter Property="ScrollViewer.PanningMode" Value="Both"/>
+                <Setter Property="Stylus.IsFlicksEnabled" Value="False"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="BorderBrush" Value="#0067C0"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- Windows 11 Style TabControl -->
+            <Style x:Key="Windows11TabControl" TargetType="TabControl">
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="TabStripPlacement" Value="Top"/>
+            </Style>
+
+            <!-- Windows 11 Style TabItem -->
+            <Style x:Key="Windows11TabItem" TargetType="TabItem">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="BorderBrush" Value="Transparent"/>
+                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+                <Setter Property="Margin" Value="4,0"/>
+                <Setter Property="Padding" Value="16,8"/>
+                <Style.Triggers>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Foreground" Value="#0067C0"/>
+                        <Setter Property="BorderBrush" Value="#0067C0"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
-    <Grid Margin="16">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="32" ResizeBorderThickness="6" />
+    </WindowChrome.WindowChrome>
 
-        <!-- Connection Settings -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,16">
-            <TextBlock Text="Azure Blob Storage Settings" 
-                       Style="{StaticResource MaterialDesignHeadline6TextBlock}"
-                       Margin="0,0,0,16"/>
-            
-            <TextBox x:Name="ConnectionStringTextBox"
-                     materialDesign:HintAssist.Hint="Connection String"
-                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                     Margin="0,0,0,8"/>
-            
-            <TextBox x:Name="ContainerNameTextBox"
-                     materialDesign:HintAssist.Hint="Container Name"
-                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                     Margin="0,0,0,16"/>
-            
-            <Button x:Name="SaveSettingsButton"
-                    Content="Save Settings"
-                    Style="{StaticResource MaterialDesignRaisedButton}"
-                    Click="SaveSettingsButton_Click"/>
-        </StackPanel>
+    <Grid>
+        <!-- Custom Title Bar -->
+        <Grid Height="32" VerticalAlignment="Top" Background="Transparent">
+            <TextBlock Text="Azure Blob Storage Manager" 
+                      VerticalAlignment="Center" 
+                      Margin="12,0,0,0"
+                      Foreground="{DynamicResource MaterialDesignBody}"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Style="{StaticResource MaterialDesignFlatButton}" 
+                        Height="32" Width="46" 
+                        Click="MinimizeButton_Click"
+                        WindowChrome.IsHitTestVisibleInChrome="True">
+                    <materialDesign:PackIcon Kind="WindowMinimize" />
+                </Button>
+                <Button Style="{StaticResource MaterialDesignFlatButton}" 
+                        Height="32" Width="46" 
+                        Click="MaximizeButton_Click"
+                        WindowChrome.IsHitTestVisibleInChrome="True">
+                    <materialDesign:PackIcon Kind="WindowMaximize" />
+                </Button>
+                <Button Style="{StaticResource MaterialDesignFlatButton}" 
+                        Height="32" Width="46" 
+                        Click="CloseButton_Click"
+                        WindowChrome.IsHitTestVisibleInChrome="True">
+                    <materialDesign:PackIcon Kind="Close" />
+                </Button>
+            </StackPanel>
+        </Grid>
 
-        <!-- Tab Control for Upload and Download -->
-        <TabControl Grid.Row="1" Style="{StaticResource MaterialDesignFilledTabControl}" 
-                    TabStripPlacement="Top" 
-                    Margin="0,8,0,0"
-                    SelectionChanged="TabControl_SelectionChanged">
-            <!-- Upload Tab -->
-            <TabItem>
-                <TabItem.Header>
-                    <StackPanel Orientation="Horizontal" Margin="8,0">
-                        <materialDesign:PackIcon Kind="Upload" Width="24" Height="24" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Upload" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </TabItem.Header>
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
+        <!-- Main Content -->
+        <Grid Margin="16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-                    <!-- Monitored Folders -->
-                    <Grid Grid.Row="0" Margin="0,0,0,16">
+            <!-- Tab Control -->
+            <TabControl Grid.Row="0" 
+                        Style="{StaticResource Windows11TabControl}" 
+                        TabStripPlacement="Top" 
+                        SelectionChanged="TabControl_SelectionChanged" Margin="0,10,0,0">
+                <!-- Upload Tab -->
+                <TabItem Style="{StaticResource Windows11TabItem}">
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal" Margin="8,0">
+                            <materialDesign:PackIcon Kind="Upload" Width="24" Height="24" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Upload" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </TabItem.Header>
+                    <Grid Margin="0,16,0,0">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Text="Monitored Folders" 
-                                  Style="{StaticResource MaterialDesignHeadline6TextBlock}"
-                                  Margin="0,0,0,8"/>
+                        <!-- Monitored Folders -->
+                        <Grid Grid.Row="0" Margin="0,0,0,16">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
 
-                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
-                            <TextBox x:Name="FolderPathTextBox"
-                                    materialDesign:HintAssist.Hint="Folder Path"
-                                    Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                    Width="400"
-                                    Margin="0,0,8,0"/>
+                            <TextBlock Text="Monitored Folders" 
+                                      Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                                      Margin="0,0,0,8"/>
+
+                            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
+                                <TextBox x:Name="FolderPathTextBox"
+                                        materialDesign:HintAssist.Hint="Folder Path"
+                                        Style="{StaticResource Windows11TextBox}"
+                                        Width="400"
+                                        Margin="0,0,8,0"/>
+                                
+                                <Button x:Name="BrowseFolderButton"
+                                        Content="Browse"
+                                        Style="{StaticResource Windows11Button}"
+                                        Click="BrowseFolderButton_Click"
+                                        Margin="0,0,8,0"/>
+                                
+                                <Button x:Name="AddFolderButton"
+                                        Content="Add Folder"
+                                        Style="{StaticResource Windows11Button}"
+                                        Click="AddFolderButton_Click"/>
+                            </StackPanel>
+
+                            <ListView x:Name="MonitoredFoldersListView"
+                                     Grid.Row="2"
+                                     Style="{StaticResource Windows11ListView}"
+                                     Height="150">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn Header="Folder Path" Width="600" DisplayMemberBinding="{Binding}"/>
+                                        <GridViewColumn Header="Actions" Width="200">
+                                            <GridViewColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Button Content="Remove"
+                                                            Style="{StaticResource Windows11FlatButton}"
+                                                            Click="RemoveFolderButton_Click"/>
+                                                </DataTemplate>
+                                            </GridViewColumn.CellTemplate>
+                                        </GridViewColumn>
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
+                        </Grid>
+
+                        <!-- File Upload Area -->
+                        <Grid Grid.Row="1">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Text="Drag and drop files here or click to browse"
+                                      Style="{StaticResource MaterialDesignSubtitle1TextBlock}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Margin="0,0,0,16"/>
+
+                            <ListView x:Name="FilesListView"
+                                     Grid.Row="1"
+                                     Style="{StaticResource Windows11ListView}"
+                                     AllowDrop="True"
+                                     Drop="FilesListView_Drop"
+                                     DragEnter="FilesListView_DragEnter">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn Header="File Name" Width="300" DisplayMemberBinding="{Binding FileName}"/>
+                                        <GridViewColumn Header="Size" Width="100" DisplayMemberBinding="{Binding Size}"/>
+                                        <GridViewColumn Header="Status" Width="100" DisplayMemberBinding="{Binding Status}"/>
+                                        <GridViewColumn Header="Progress" Width="200">
+                                            <GridViewColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <ProgressBar Value="{Binding Progress}" 
+                                                                Width="180"
+                                                                Height="20"
+                                                                Style="{StaticResource MaterialDesignLinearProgressBar}"/>
+                                                </DataTemplate>
+                                            </GridViewColumn.CellTemplate>
+                                        </GridViewColumn>
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
+                        </Grid>
+                    </Grid>
+                </TabItem>
+
+                <!-- Download Tab -->
+                <TabItem Style="{StaticResource Windows11TabItem}">
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal" Margin="8,0">
+                            <materialDesign:PackIcon Kind="Download" Width="24" Height="24" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Download" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </TabItem.Header>
+                    <Grid Margin="0,16,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
+                            <TextBlock Text="Blob Storage Items" 
+                                      Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                                      VerticalAlignment="Center"/>
                             
-                            <Button x:Name="BrowseFolderButton"
-                                    Content="Browse"
-                                    Style="{StaticResource MaterialDesignRaisedButton}"
-                                    Click="BrowseFolderButton_Click"
-                                    Margin="0,0,8,0"/>
-                            
-                            <Button x:Name="AddFolderButton"
-                                    Content="Add Folder"
-                                    Style="{StaticResource MaterialDesignRaisedButton}"
-                                    Click="AddFolderButton_Click"/>
+                            <Button x:Name="RefreshBlobsButton"
+                                    Content="Refresh"
+                                    Style="{StaticResource Windows11Button}"
+                                    Click="RefreshBlobsButton_Click"
+                                    Margin="16,0,0,0"
+                                    VerticalAlignment="Center"/>
                         </StackPanel>
 
-                        <ListView x:Name="MonitoredFoldersListView"
-                                 Grid.Row="2"
-                                 Style="{StaticResource MaterialDesignListView}"
-                                 Height="150">
+                        <ListView x:Name="BlobsListView"
+                                 Grid.Row="1"
+                                 Style="{StaticResource Windows11ListView}">
                             <ListView.View>
                                 <GridView>
-                                    <GridViewColumn Header="Folder Path" Width="600" DisplayMemberBinding="{Binding}"/>
+                                    <GridViewColumn Header="Name" Width="300" DisplayMemberBinding="{Binding Name}"/>
+                                    <GridViewColumn Header="Size" Width="100" DisplayMemberBinding="{Binding Size}"/>
+                                    <GridViewColumn Header="Last Modified" Width="150" DisplayMemberBinding="{Binding LastModified}"/>
                                     <GridViewColumn Header="Actions" Width="200">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
-                                                <Button Content="Remove"
-                                                        Style="{StaticResource MaterialDesignFlatButton}"
-                                                        Click="RemoveFolderButton_Click"/>
+                                                <Button Content="Download"
+                                                        Style="{StaticResource Windows11FlatButton}"
+                                                        Click="DownloadBlobButton_Click"/>
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
@@ -121,97 +299,64 @@
                             </ListView.View>
                         </ListView>
                     </Grid>
+                </TabItem>
 
-                    <!-- File Upload Area -->
-                    <Grid Grid.Row="1">
+                <!-- Settings Tab -->
+                <TabItem Style="{StaticResource Windows11TabItem}">
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal" Margin="8,0">
+                            <materialDesign:PackIcon Kind="Cog" Width="24" Height="24" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Settings" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </TabItem.Header>
+                    <Grid Margin="0,16,0,0">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Text="Drag and drop files here or click to browse"
-                                  Style="{StaticResource MaterialDesignSubtitle1TextBlock}"
-                                  HorizontalAlignment="Center"
-                                  VerticalAlignment="Center"
-                                  Margin="0,0,0,16"/>
+                        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+                            <TextBlock Text="Azure Blob Storage Settings" 
+                                      Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                                      Margin="0,0,0,16"/>
+                            
+                            <TextBox x:Name="ConnectionStringTextBox"
+                                    materialDesign:HintAssist.Hint="Connection String"
+                                    Style="{StaticResource Windows11TextBox}"
+                                    Margin="0,0,0,8"/>
+                            
+                            <TextBox x:Name="ContainerNameTextBox"
+                                    materialDesign:HintAssist.Hint="Container Name"
+                                    Style="{StaticResource Windows11TextBox}"
+                                    Margin="0,0,0,16"/>
+                            
+                            <Button x:Name="SaveSettingsButton"
+                                    Content="Save Settings"
+                                    Style="{StaticResource Windows11Button}"
+                                    Click="SaveSettingsButton_Click"/>
+                        </StackPanel>
 
-                        <ListView x:Name="FilesListView"
-                                 Grid.Row="1"
-                                 Style="{StaticResource MaterialDesignListView}"
-                                 AllowDrop="True"
-                                 Drop="FilesListView_Drop"
-                                 DragEnter="FilesListView_DragEnter">
-                            <ListView.View>
-                                <GridView>
-                                    <GridViewColumn Header="File Name" Width="300" DisplayMemberBinding="{Binding FileName}"/>
-                                    <GridViewColumn Header="Size" Width="100" DisplayMemberBinding="{Binding Size}"/>
-                                    <GridViewColumn Header="Status" Width="100" DisplayMemberBinding="{Binding Status}"/>
-                                    <GridViewColumn Header="Progress" Width="200">
-                                        <GridViewColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <ProgressBar Value="{Binding Progress}" 
-                                                            Width="180"
-                                                            Height="20"
-                                                            Style="{StaticResource MaterialDesignLinearProgressBar}"/>
-                                            </DataTemplate>
-                                        </GridViewColumn.CellTemplate>
-                                    </GridViewColumn>
-                                </GridView>
-                            </ListView.View>
-                        </ListView>
+                        <StackPanel Grid.Row="1">
+                            <TextBlock Text="Application Information" 
+                                      Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                                      Margin="0,0,0,16"/>
+                            
+                            <TextBlock Text="This application allows you to upload files to Azure Blob Storage and monitor folders for changes."
+                                      Style="{StaticResource MaterialDesignBody1TextBlock}"
+                                      TextWrapping="Wrap"
+                                      Margin="0,0,0,8"/>
+                            
+                            <TextBlock Text="Features:"
+                                      Style="{StaticResource MaterialDesignSubtitle1TextBlock}"
+                                      Margin="0,16,0,8"/>
+                            
+                            <TextBlock Text="• Drag and drop file uploads&#x0a;• Folder monitoring with automatic sync&#x0a;• Download files from Azure Blob Storage&#x0a;• Real-time file change detection"
+                                      Style="{StaticResource MaterialDesignBody1TextBlock}"
+                                      TextWrapping="Wrap"/>
+                        </StackPanel>
                     </Grid>
-                </Grid>
-            </TabItem>
-
-            <!-- Download Tab -->
-            <TabItem>
-                <TabItem.Header>
-                    <StackPanel Orientation="Horizontal" Margin="8,0">
-                        <materialDesign:PackIcon Kind="Download" Width="24" Height="24" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Download" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </TabItem.Header>
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
-                        <TextBlock Text="Blob Storage Items" 
-                                  Style="{StaticResource MaterialDesignHeadline6TextBlock}"
-                                  VerticalAlignment="Center"/>
-                        
-                        <Button x:Name="RefreshBlobsButton"
-                                Content="Refresh"
-                                Style="{StaticResource MaterialDesignRaisedButton}"
-                                Click="RefreshBlobsButton_Click"
-                                Margin="16,0,0,0"
-                                VerticalAlignment="Center"/>
-                    </StackPanel>
-
-                    <ListView x:Name="BlobsListView"
-                             Grid.Row="1"
-                             Style="{StaticResource MaterialDesignListView}">
-                        <ListView.View>
-                            <GridView>
-                                <GridViewColumn Header="Name" Width="300" DisplayMemberBinding="{Binding Name}"/>
-                                <GridViewColumn Header="Size" Width="100" DisplayMemberBinding="{Binding Size}"/>
-                                <GridViewColumn Header="Last Modified" Width="150" DisplayMemberBinding="{Binding LastModified}"/>
-                                <GridViewColumn Header="Actions" Width="200">
-                                    <GridViewColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Button Content="Download"
-                                                    Style="{StaticResource MaterialDesignFlatButton}"
-                                                    Click="DownloadBlobButton_Click"/>
-                                        </DataTemplate>
-                                    </GridViewColumn.CellTemplate>
-                                </GridViewColumn>
-                            </GridView>
-                        </ListView.View>
-                    </ListView>
-                </Grid>
-            </TabItem>
-        </TabControl>
+                </TabItem>
+            </TabControl>
+        </Grid>
     </Grid>
 </Window> 
