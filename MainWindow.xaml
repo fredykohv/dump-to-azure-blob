@@ -217,7 +217,7 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
 
-                            <TextBlock Text="Drag and drop files here or click to browse"
+                            <TextBlock Text="Drag and drop files here"
                                       Style="{StaticResource MaterialDesignSubtitle1TextBlock}"
                                       HorizontalAlignment="Center"
                                       VerticalAlignment="Center"
@@ -233,7 +233,7 @@
                                     <GridView>
                                         <GridViewColumn Header="File Name" Width="300" DisplayMemberBinding="{Binding FileName}"/>
                                         <GridViewColumn Header="Size" Width="100" DisplayMemberBinding="{Binding Size}"/>
-                                        <GridViewColumn Header="Status" Width="100" DisplayMemberBinding="{Binding Status}"/>
+                                        <GridViewColumn Header="Status" Width="150" DisplayMemberBinding="{Binding Status}"/>
                                         <GridViewColumn Header="Progress" Width="200">
                                             <GridViewColumn.CellTemplate>
                                                 <DataTemplate>
@@ -273,14 +273,14 @@
                             <Button x:Name="RefreshBlobsButton"
                                     Content="Refresh"
                                     Style="{StaticResource Windows11Button}"
-                                    Click="RefreshBlobsButton_Click"
+                                    Click="RefreshFilesButton_Click"
                                     Margin="16,0,0,0"
                                     VerticalAlignment="Center"/>
                         </StackPanel>
 
                         <ListView x:Name="BlobsListView"
-                                 Grid.Row="1"
-                                 Style="{StaticResource Windows11ListView}">
+                                Grid.Row="1"
+                                Style="{StaticResource Windows11ListView}">
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn Header="Name" Width="300" DisplayMemberBinding="{Binding Name}"/>
@@ -289,15 +289,22 @@
                                     <GridViewColumn Header="Actions" Width="200">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
-                                                <Button Content="Download"
-                                                        Style="{StaticResource Windows11FlatButton}"
-                                                        Click="DownloadBlobButton_Click"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button Content="Download"
+                                                            Style="{StaticResource Windows11FlatButton}"
+                                                            Click="DownloadFileButton_Click"/>
+                                                    <Button Content="Delete"
+                                                            Style="{StaticResource Windows11FlatButton}"
+                                                            Click="DeleteFileButton_Click"
+                                                            Margin="10,0,0,0"/>
+                                                </StackPanel>
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
                                 </GridView>
                             </ListView.View>
                         </ListView>
+
                     </Grid>
                 </TabItem>
 
@@ -319,40 +326,21 @@
                             <TextBlock Text="Azure Blob Storage Settings" 
                                       Style="{StaticResource MaterialDesignHeadline6TextBlock}"
                                       Margin="0,0,0,16"/>
-                            
+
                             <TextBox x:Name="ConnectionStringTextBox"
                                     materialDesign:HintAssist.Hint="Connection String"
                                     Style="{StaticResource Windows11TextBox}"
                                     Margin="0,0,0,8"/>
-                            
+
                             <TextBox x:Name="ContainerNameTextBox"
                                     materialDesign:HintAssist.Hint="Container Name"
                                     Style="{StaticResource Windows11TextBox}"
                                     Margin="0,0,0,16"/>
-                            
+
                             <Button x:Name="SaveSettingsButton"
                                     Content="Save Settings"
                                     Style="{StaticResource Windows11Button}"
                                     Click="SaveSettingsButton_Click"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="1">
-                            <TextBlock Text="Application Information" 
-                                      Style="{StaticResource MaterialDesignHeadline6TextBlock}"
-                                      Margin="0,0,0,16"/>
-                            
-                            <TextBlock Text="This application allows you to upload files to Azure Blob Storage and monitor folders for changes."
-                                      Style="{StaticResource MaterialDesignBody1TextBlock}"
-                                      TextWrapping="Wrap"
-                                      Margin="0,0,0,8"/>
-                            
-                            <TextBlock Text="Features:"
-                                      Style="{StaticResource MaterialDesignSubtitle1TextBlock}"
-                                      Margin="0,16,0,8"/>
-                            
-                            <TextBlock Text="• Drag and drop file uploads&#x0a;• Folder monitoring with automatic sync&#x0a;• Download files from Azure Blob Storage&#x0a;• Real-time file change detection"
-                                      Style="{StaticResource MaterialDesignBody1TextBlock}"
-                                      TextWrapping="Wrap"/>
                         </StackPanel>
                     </Grid>
                 </TabItem>

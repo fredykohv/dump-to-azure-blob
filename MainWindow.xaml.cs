@@ -41,7 +41,6 @@ namespace DumpToAzureBlob
             BlobsListView.ItemsSource = _blobItems;
             MonitoredFoldersListView.ItemsSource = _monitoredFolders;
 
-            // Load saved settings
             LoadSettings();
         }
 
@@ -192,7 +191,7 @@ namespace DumpToAzureBlob
                 _folderWatchers[folderPath] = watcher;
                 _ = SyncFolderWithBlobStorageAsync(folderPath);
                 
-                MessageBox.Show($"Started monitoring folder: {folderPath}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                // MessageBox.Show($"Started monitoring folder: {folderPath}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
@@ -223,7 +222,7 @@ namespace DumpToAzureBlob
                 var containerClient = _blobServiceClient.GetBlobContainerClient(_containerName);
                 var files = Directory.GetFiles(folderPath, "*.*", SearchOption.AllDirectories);
                 
-                MessageBox.Show($"Found {files.Length} files to sync in {folderPath}", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
+                // MessageBox.Show($"Found {files.Length} files to sync in {folderPath}", "Information", MessageBoxButton.OK, MessageBoxImage.Information);
 
                 foreach (var file in files)
                 {
@@ -232,14 +231,11 @@ namespace DumpToAzureBlob
                         var relativePath = Path.GetRelativePath(folderPath, file);
                         var blockBlobClient = containerClient.GetBlockBlobClient(relativePath);
                         
-                        // Check if the blob already exists
                         if (await blockBlobClient.ExistsAsync())
                         {
-                            // Get the local file's last modified time
                             var localFileInfo = new FileInfo(file);
                             var localLastModified = localFileInfo.LastWriteTimeUtc;
                             
-                            // Get the blob's last modified time
                             var blobProperties = await blockBlobClient.GetPropertiesAsync();
                             var blobLastModified = blobProperties.Value.LastModified.UtcDateTime;
                             
@@ -280,7 +276,6 @@ namespace DumpToAzureBlob
                 // Check if the file is still being written to
                 using (var fs = new FileStream(e.FullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 {
-                    // If we can open the file with ReadWrite sharing, it's done being written
                     var containerClient = _blobServiceClient.GetBlobContainerClient(_containerName);
                     var relativePath = Path.GetRelativePath(Path.GetDirectoryName(e.FullPath)!, e.FullPath);
                     var blockBlobClient = containerClient.GetBlockBlobClient(relativePath);
@@ -298,7 +293,9 @@ namespace DumpToAzureBlob
         private async Task OnFileDeletedAsync(object sender, FileSystemEventArgs e)
         {
             if (_blobServiceClient == null || string.IsNullOrEmpty(_containerName))
+            {
                 return;
+            }
 
             try
             {
@@ -317,7 +314,6 @@ namespace DumpToAzureBlob
         {
             // Delete the old file
             await OnFileDeletedAsync(sender, e);
-            // Wait for the Changed event to handle the new file
         }
 
         private void FilesListView_DragEnter(object sender, DragEventArgs e)
@@ -407,7 +403,6 @@ namespace DumpToAzureBlob
         {
             if (e.Source is System.Windows.Controls.TabControl tabControl)
             {
-                // Check if the selected tab is the Download tab (index 1)
                 if (tabControl.SelectedIndex == 1)
                 {
                     await RefreshBlobListAsync();
@@ -444,12 +439,12 @@ namespace DumpToAzureBlob
             }
         }
 
-        private async void RefreshBlobsButton_Click(object sender, RoutedEventArgs e)
+        private async void RefreshFilesButton_Click(object sender, RoutedEventArgs e)
         {
             await RefreshBlobListAsync();
         }
 
-        private async void DownloadBlobButton_Click(object sender, RoutedEventArgs e)
+        private async void DownloadFileButton_Click(object sender, RoutedEventArgs e)
         {
             if (sender is System.Windows.Controls.Button button && button.DataContext is BlobItem blobItem)
             {
@@ -471,6 +466,23 @@ namespace DumpToAzureBlob
                     {
                         MessageBox.Show($"Error downloading file: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
+                }
+            }
+        }
+
+        private async void DeleteFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button button && button.DataContext is BlobItem blobItem)
+            {
+                try
+                {
+                    await blobItem.BlobClient.DeleteIfExistsAsync();
+                    _blobItems.Remove(blobItem);
+                    MessageBox.Show($"Successfully deleted: {blobItem.Name}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error deleting file: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
